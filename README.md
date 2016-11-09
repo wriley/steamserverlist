@@ -6,7 +6,7 @@ A Steam server list program written in [golang](https://golang.org/) that uses t
 
 ### DayZ servers with "hardcore" in the name
 ```
-$ ./steamserverlist -key YOURAPIKEY -filter '\gamedir\dayz\name_match\*hardcore*'
+$ steamserverlist -key YOURAPIKEY -filter '\gamedir\dayz\name_match\*hardcore*'
 103.13.101.247:27700 2500
 64.94.95.98:27500 2300
 64.94.95.154:27700 2500
