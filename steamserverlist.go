@@ -6,12 +6,12 @@ import (
     "net/http"
     "encoding/json"
     "bytes"
-    //"unsafe"
     "net/url"
     "flag"
     "strings"
 )
 
+// nested struct to hold json data
 type SteamServerList struct {
     Response struct {
         Servers []struct {
@@ -37,32 +37,36 @@ type SteamServerList struct {
 }
 
 func main() {
+    // Get command line arguments
     KeyPtr := flag.String("key", "", "Steam API key")
     LimitPtr := flag.Int("limit", 5000, "Limit search results")
     FilterPtr := flag.String("filter", "", "filter string")
-
     flag.Parse()
 
+    // Steam API key is required
     if *KeyPtr == "" {
         fmt.Printf("-key is required\n")
         return
     }
 
+    // Escape user input and build API url
     SafeKey := url.QueryEscape(*KeyPtr)
     SafeFilter := url.QueryEscape(*FilterPtr)
-
     url := fmt.Sprintf("https://api.steampowered.com/IGameServersService/GetServerList/v1/?limit=%d&key=%s", *LimitPtr, SafeKey)
 
+    // If a filter was supplied on command line then add it to url
     if len(SafeFilter) > 0 {
         url = fmt.Sprintf("%s&filter=%s", url, SafeFilter)
     }
 
+    // Setup http request
     req, err := http.NewRequest("GET", url, nil)
     if err != nil {
         log.Fatal("NewRequest: ", err)
         return
     }
 
+    // Use http.Client to send request
     client := &http.Client{}
     resp, err := client.Do(req)
     if err != nil {
@@ -70,18 +74,27 @@ func main() {
         return
     }
 
+    // defer closing
     defer resp.Body.Close()
 
-    var serverlist SteamServerList
-
+    // put response (which should be json) into a byte array for use by json.Unmarshal
     buf := new(bytes.Buffer)
     buf.ReadFrom(resp.Body)
     b := buf.Bytes()
 
-    if err := json.Unmarshal(b, &serverlist); err != nil {
-        log.Fatal(err)
+    // Simple check to see if we don't have json
+    if b[0] != '{' {
+        log.Fatal(fmt.Sprintf("ERROR: No json received -> %v", buf))
     }
 
+    // Populate struct with json data
+    var serverlist SteamServerList
+
+    if err := json.Unmarshal(b, &serverlist); err != nil {
+        log.Fatal("Unmarshal: ", err)
+    }
+
+    // Iterate over servers and print IP and query port
     for _, server := range serverlist.Response.Servers {
         tokens := strings.Split(server.Addr, ":")
         fmt.Printf("%s %s\n", tokens[0], tokens[1])
