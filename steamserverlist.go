@@ -9,6 +9,7 @@ import (
 	//"unsafe"
 	"net/url"
 	"flag"
+	"strings"
 )
 
 type SteamServerList struct {
@@ -97,6 +98,7 @@ func main() {
 	}
 	
 	for _, server := range serverlist.Response.Servers {
-		fmt.Printf("%s %d\n", server.Addr, server.Gameport)
+		tokens := strings.Split(server.Addr, ":")
+		fmt.Printf("%s %s\n", tokens[0], tokens[1])
 	}
 }
