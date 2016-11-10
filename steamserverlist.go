@@ -40,23 +40,23 @@ func main() {
     KeyPtr := flag.String("key", "", "Steam API key")
     LimitPtr := flag.Int("limit", 5000, "Limit search results")
     FilterPtr := flag.String("filter", "", "filter string")
-    
+
     flag.Parse()
-    
+
     if *KeyPtr == "" {
         fmt.Printf("-key is required\n")
         return
     }
-    
+
     SafeKey := url.QueryEscape(*KeyPtr)
     SafeFilter := url.QueryEscape(*FilterPtr)
-    
+
     url := fmt.Sprintf("https://api.steampowered.com/IGameServersService/GetServerList/v1/?limit=%d&key=%s", *LimitPtr, SafeKey)
-    
+
     if len(SafeFilter) > 0 {
         url = fmt.Sprintf("%s&filter=%s", url, SafeFilter)
     }
-    
+
     req, err := http.NewRequest("GET", url, nil)
     if err != nil {
         log.Fatal("NewRequest: ", err)
@@ -73,15 +73,15 @@ func main() {
     defer resp.Body.Close()
 
     var serverlist SteamServerList
-    
+
     buf := new(bytes.Buffer)
     buf.ReadFrom(resp.Body)
     b := buf.Bytes()
-    
+
     if err := json.Unmarshal(b, &serverlist); err != nil {
         log.Fatal(err)
     }
-    
+
     for _, server := range serverlist.Response.Servers {
         tokens := strings.Split(server.Addr, ":")
         fmt.Printf("%s %s\n", tokens[0], tokens[1])
