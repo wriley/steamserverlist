@@ -9,38 +9,50 @@ import (
     "net/url"
     "flag"
     "strings"
+    "sort"
 )
 
 // nested struct to hold json data
 type SteamServerList struct {
-    Response struct {
-        Servers []struct {
-            Addr string `json:"addr"`
-            Gameport int `json:"gameport"`
-            Steamid string `json:"steamid"`
-            Name string `json:"name"`
-            Appid int `json:"appid"`
-            Gamedir string `json:"gamedir"`
-            Version string `json:"version"`
-            Product string `json:"product"`
-            Region int `json:"region"`
-            Players int `json:"players"`
-            MaxPlayers int `json:"max_players"`
-            Bots int `json:"bots"`
-            Map string `json:"map"`
-            Secure bool `json:"secure"`
-            Dedicated bool `json:"dedicated"`
-            Os string `json:"os"`
-            Gametype string `json:"gametype"`
-        } `json:"servers"`
-    } `json:"response"`
+    Response `json:"response"`
 }
+type Response struct {
+    Servers []Server `json:"servers"`
+}
+type Server struct {
+    Addr string `json:"addr"`
+    Gameport int `json:"gameport"`
+    Steamid string `json:"steamid"`
+    Name string `json:"name"`
+    Appid int `json:"appid"`
+    Gamedir string `json:"gamedir"`
+    Version string `json:"version"`
+    Product string `json:"product"`
+    Region int `json:"region"`
+    Players int `json:"players"`
+    MaxPlayers int `json:"max_players"`
+    Bots int `json:"bots"`
+    Map string `json:"map"`
+    Secure bool `json:"secure"`
+    Dedicated bool `json:"dedicated"`
+    Os string `json:"os"`
+    Gametype string `json:"gametype"`
+}
+
+// implement sorting interface
+type ServerList []Server
+func (a ServerList) Len() int { return len(a) }
+func (a ServerList) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a ServerList) Less(i, j int) bool { return a[i].Name < a[j].Name; }
 
 func main() {
     // Get command line arguments
     KeyPtr := flag.String("key", "", "Steam API key")
     LimitPtr := flag.Int("limit", 5000, "Limit search results")
     FilterPtr := flag.String("filter", "", "filter string")
+    PlayersPtr := flag.Bool("players", false, "show player info")
+    DebugPtr := flag.Bool("debug", false, "show debug output")
+    DisplayPtr := flag.Bool("display", false, "Display full server info table")
     flag.Parse()
 
     // Steam API key is required
@@ -94,9 +106,39 @@ func main() {
         log.Fatal("Unmarshal: ", err)
     }
 
+    // sort servers by name
+    var serverList ServerList
+    serverList = serverlist.Response.Servers
+    sort.Sort(serverList)
+
+    playerCount := 0
+
     // Iterate over servers and print IP and query port
-    for _, server := range serverlist.Response.Servers {
-        tokens := strings.Split(server.Addr, ":")
-        fmt.Printf("%s %s\n", tokens[0], tokens[1])
+    for _, server := range serverList {
+        if *DebugPtr {
+            fmt.Printf("%+v\n", server)
+        }
+
+        if *DisplayPtr {
+            timeTokens := strings.Split(server.Gametype, ",")
+            Time := timeTokens[len(timeTokens)-1]
+            Perspective := "3PP"
+            if strings.Contains(server.Gametype, "no3rd") {
+                Perspective = "1PP"
+            }
+            fmt.Printf("%-52s %2d/%2d %s %s %s\n", server.Name, server.Players, server.MaxPlayers, Time, Perspective, server.Version)
+            playerCount += server.Players
+        } else {
+            tokens := strings.Split(server.Addr, ":")
+            if *PlayersPtr {
+                fmt.Printf("%s %s %d %d\n", tokens[0], tokens[1], server.Players, server.MaxPlayers)
+            } else {
+                fmt.Printf("%s %s\n", tokens[0], tokens[1])
+            }
+        }
+    }
+
+    if *DisplayPtr {
+        fmt.Printf("\n%d players on %d servers\n", playerCount, len(serverList))
     }
 }
