@@ -126,7 +126,11 @@ func main() {
             if strings.Contains(server.Gametype, "no3rd") {
                 Perspective = "1PP"
             }
-            fmt.Printf("%-52s %2d/%2d %s %s %s\n", server.Name, server.Players, server.MaxPlayers, Time, Perspective, server.Version)
+            serverName := server.Name
+            if len(serverName) > 52 {
+                serverName = serverName[:52]
+            }
+            fmt.Printf("%-52s %2d/%2d %s %s %s\n", serverName, server.Players, server.MaxPlayers, Time, Perspective, server.Version)
             playerCount += server.Players
         } else {
             tokens := strings.Split(server.Addr, ":")
