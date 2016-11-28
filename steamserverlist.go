@@ -132,7 +132,11 @@ func main() {
             if len(serverName) > 52 {
                 serverName = serverName[:52]
             }
-            fmt.Printf("%-52s %2d/%2d %s %s %s\n", serverName, server.Players, server.MaxPlayers, Time, Perspective, server.Version)
+            if server.Appid == 221100 {
+                fmt.Printf("%-52s %2d/%2d %s %s %s\n", serverName, server.Players, server.MaxPlayers, Time, Perspective, server.Version)
+            } else {
+                fmt.Printf("%-52s %2d/%2d %s %s\n", serverName, server.Players, server.MaxPlayers, Time, server.Version)
+            }
             playerCount += server.Players
         } else {
             tokens := strings.Split(server.Addr, ":")
