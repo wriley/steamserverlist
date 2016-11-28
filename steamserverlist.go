@@ -10,6 +10,7 @@ import (
     "flag"
     "strings"
     "sort"
+    "regexp"
 )
 
 // nested struct to hold json data
@@ -47,17 +48,18 @@ func (a ServerList) Less(i, j int) bool { return a[i].Name < a[j].Name; }
 
 func main() {
     // Get command line arguments
-    KeyPtr := flag.String("key", "", "Steam API key")
+    KeyPtr := flag.String("key", "", "Steam API key (**REQUIRED**)")
     LimitPtr := flag.Int("limit", 5000, "Limit search results")
     FilterPtr := flag.String("filter", "", "filter string")
     PlayersPtr := flag.Bool("players", false, "show player info")
     DebugPtr := flag.Bool("debug", false, "show debug output")
     DisplayPtr := flag.Bool("display", false, "Display full server info table")
+    KickersPtr := flag.Bool("kickers", false, "Display server info with kick in name")
     flag.Parse()
 
     // Steam API key is required
     if *KeyPtr == "" {
-        fmt.Printf("-key is required\n")
+        flag.PrintDefaults()
         return
     }
 
@@ -120,8 +122,8 @@ func main() {
         }
 
         if *DisplayPtr {
-            timeTokens := strings.Split(server.Gametype, ",")
-            Time := timeTokens[len(timeTokens)-1]
+            r, _ := regexp.Compile("[0-9]{1,2}:[0-9]{1,2}")
+            Time := r.Find([]byte(server.Gametype))
             Perspective := "3PP"
             if strings.Contains(server.Gametype, "no3rd") {
                 Perspective = "1PP"
@@ -136,6 +138,8 @@ func main() {
             tokens := strings.Split(server.Addr, ":")
             if *PlayersPtr {
                 fmt.Printf("%s %s %d %d\n", tokens[0], tokens[1], server.Players, server.MaxPlayers)
+            } else if *KickersPtr {
+                fmt.Printf("%-15s\t%d\t%s\n", tokens[0], server.Gameport, server.Name)
             } else {
                 fmt.Printf("%s %s\n", tokens[0], tokens[1])
             }
