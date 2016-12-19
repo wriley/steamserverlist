@@ -11,6 +11,7 @@ import (
     "strings"
     "sort"
     "regexp"
+    "strconv"
 )
 
 // nested struct to hold json data
@@ -124,17 +125,30 @@ func main() {
         if *DisplayPtr {
             r, _ := regexp.Compile("[0-9]{1,2}:[0-9]{1,2}")
             Time := r.Find([]byte(server.Gametype))
+// grep -oE 'etm[0-9]{1,}\.[0-9]{,6}' | sed 's/etm//'
+            r, _ = regexp.Compile("etm([0-9]{1,3}.[0-9]{1,6})")
+            TimeMultiMatches := r.FindStringSubmatch(server.Gametype)
+            TimeMultiplier := 1
+            if len(TimeMultiMatches) > 0 {
+                i, err := strconv.ParseFloat(TimeMultiMatches[1], 64)
+                if err == nil {
+                    TimeMultiplier = int(i)
+                }
+            }
             Perspective := "3PP"
             if strings.Contains(server.Gametype, "no3rd") {
                 Perspective = "1PP"
             }
             serverName := server.Name
-            if len(serverName) > 52 {
-                serverName = serverName[:52]
-            }
             if server.Appid == 221100 {
-                fmt.Printf("%-52s %2d/%2d %s %s %s\n", serverName, server.Players, server.MaxPlayers, Time, Perspective, server.Version)
+                if len(serverName) > 48 {
+                    serverName = serverName[:48]
+                }
+                fmt.Printf("%-48s %2d/%2d %s %dx %s %s\n", serverName, server.Players, server.MaxPlayers, Time, TimeMultiplier, Perspective, server.Version)
             } else {
+                if len(serverName) > 52 {
+                    serverName = serverName[:52]
+                }
                 fmt.Printf("%-52s %2d/%2d %s %s\n", serverName, server.Players, server.MaxPlayers, Time, server.Version)
             }
             playerCount += server.Players
