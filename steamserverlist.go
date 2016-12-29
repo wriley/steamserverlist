@@ -144,7 +144,7 @@ func main() {
                 if len(serverName) > 48 {
                     serverName = serverName[:48]
                 }
-                fmt.Printf("%-48s %2d/%2d %s %dx %s %s\n", serverName, server.Players, server.MaxPlayers, Time, TimeMultiplier, Perspective, server.Version)
+                fmt.Printf("%-48s %2d/%2d %s %2dx %s %s\n", serverName, server.Players, server.MaxPlayers, Time, TimeMultiplier, Perspective, server.Version)
             } else {
                 if len(serverName) > 52 {
                     serverName = serverName[:52]
