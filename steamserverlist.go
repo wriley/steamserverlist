@@ -50,7 +50,7 @@ func (a ServerList) Less(i, j int) bool { return a[i].Name < a[j].Name; }
 func main() {
     // Get command line arguments
     KeyPtr := flag.String("key", "", "Steam API key (**REQUIRED**)")
-    LimitPtr := flag.Int("limit", 5000, "Limit search results")
+    LimitPtr := flag.Int("limit", 10000, "Limit search results")
     FilterPtr := flag.String("filter", "", "filter string")
     PlayersPtr := flag.Bool("players", false, "show player info")
     DebugPtr := flag.Bool("debug", false, "show debug output")
