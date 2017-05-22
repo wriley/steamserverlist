@@ -55,6 +55,7 @@ func main() {
     PlayersPtr := flag.Bool("players", false, "show player info")
     DebugPtr := flag.Bool("debug", false, "show debug output")
     DisplayPtr := flag.Bool("display", false, "Display full server info table")
+    Display2Ptr := flag.Bool("display2", false, "Display full server info table and IP/Port")
     KickersPtr := flag.Bool("kickers", false, "Display server info with kick in name")
     flag.Parse()
 
@@ -122,7 +123,7 @@ func main() {
             fmt.Printf("%+v\n", server)
         }
 
-        if *DisplayPtr {
+        if *DisplayPtr || *Display2Ptr {
             r, _ := regexp.Compile("[0-9]{1,2}:[0-9]{1,2}")
             Time := r.Find([]byte(server.Gametype))
 // grep -oE 'etm[0-9]{1,}\.[0-9]{,6}' | sed 's/etm//'
@@ -144,7 +145,12 @@ func main() {
                 if len(serverName) > 48 {
                     serverName = serverName[:48]
                 }
-                fmt.Printf("%-48s %2d/%2d %s %2dx %s %s\n", serverName, server.Players, server.MaxPlayers, Time, TimeMultiplier, Perspective, server.Version)
+                if *Display2Ptr {
+                    tokens := strings.Split(server.Addr, ":")
+                    fmt.Printf("%-48s %2d/%2d %s %2dx %s %s %s %s\n", serverName, server.Players, server.MaxPlayers, Time, TimeMultiplier, Perspective, server.Version, tokens[0], tokens[1])
+                } else {
+                    fmt.Printf("%-48s %2d/%2d %s %2dx %s %s\n", serverName, server.Players, server.MaxPlayers, Time, TimeMultiplier, Perspective, server.Version)
+                }
             } else {
                 if len(serverName) > 52 {
                     serverName = serverName[:52]
@@ -164,7 +170,7 @@ func main() {
         }
     }
 
-    if *DisplayPtr {
+    if *DisplayPtr || *Display2Ptr {
         fmt.Printf("\n%d players on %d servers\n", playerCount, len(serverList))
     }
 }
