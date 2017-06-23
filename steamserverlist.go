@@ -12,6 +12,7 @@ import (
     "sort"
     "regexp"
     "strconv"
+    "time"
 )
 
 // nested struct to hold json data
@@ -83,7 +84,10 @@ func main() {
     }
 
     // Use http.Client to send request
-    client := &http.Client{}
+    timeout := time.Duration(15 * time.Second)
+    client := &http.Client{
+        Timeout: timeout,
+    }
     resp, err := client.Do(req)
     if err != nil {
         log.Fatal("Do: ", err)
