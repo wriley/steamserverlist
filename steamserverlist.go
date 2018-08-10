@@ -151,9 +151,9 @@ func main() {
                 }
                 if *Display2Ptr {
                     tokens := strings.Split(server.Addr, ":")
-                    fmt.Printf("%-48s %2d/%2d %s %2dx %s %s %s %s\n", serverName, server.Players, server.MaxPlayers, Time, TimeMultiplier, Perspective, server.Version, tokens[0], tokens[1])
+                    fmt.Printf("%-46s %3d/%3d %s %2dx %s %s %s %s\n", serverName, server.Players, server.MaxPlayers, Time, TimeMultiplier, Perspective, server.Version, tokens[0], tokens[1])
                 } else {
-                    fmt.Printf("%-48s %2d/%2d %s %2dx %s %s\n", serverName, server.Players, server.MaxPlayers, Time, TimeMultiplier, Perspective, server.Version)
+                    fmt.Printf("%-46s %3d/%3d %s %2dx %s %s\n", serverName, server.Players, server.MaxPlayers, Time, TimeMultiplier, Perspective, server.Version)
                 }
             } else {
                 if len(serverName) > 52 {
