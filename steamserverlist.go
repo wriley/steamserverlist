@@ -48,6 +48,19 @@ func (a ServerList) Len() int { return len(a) }
 func (a ServerList) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 func (a ServerList) Less(i, j int) bool { return a[i].Name < a[j].Name; }
 
+func stripCtlAndExtFromBytes(str string) string {
+	b := make([]byte, len(str))
+	var bl int
+	for i := 0; i < len(str); i++ {
+		c := str[i]
+		if c >= 32 && c < 127 {
+			b[bl] = c
+			bl++
+		}
+	}
+	return string(b[:bl])
+}
+
 func main() {
     // Get command line arguments
     KeyPtr := flag.String("key", "", "Steam API key (**REQUIRED**)")
@@ -144,10 +157,10 @@ func main() {
             if strings.Contains(server.Gametype, "no3rd") {
                 Perspective = "1PP"
             }
-            serverName := server.Name
+            serverName := stripCtlAndExtFromBytes(server.Name)
             if server.Appid == 221100 {
-                if len(serverName) > 48 {
-                    serverName = serverName[:48]
+                if len(serverName) > 46 {
+                    serverName = serverName[:46]
                 }
                 if *Display2Ptr {
                     tokens := strings.Split(server.Addr, ":")
