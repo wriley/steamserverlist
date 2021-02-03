@@ -2,7 +2,6 @@ package main
 
 import (
     "fmt"
-    "log"
     "net/http"
     "encoding/json"
     "bytes"
@@ -10,12 +9,13 @@ import (
     "flag"
     "strings"
     "sort"
-    "regexp"
     "strconv"
+    "log"
+    "regexp"
     "time"
 )
 
-// nested struct to hold json data
+// nested	struct to hold json data
 type SteamServerList struct {
     Response `json:"response"`
 }
@@ -59,6 +59,25 @@ func stripCtlAndExtFromBytes(str string) string {
 		}
 	}
 	return string(b[:bl])
+}
+
+func Format(n int64) string {
+    in := strconv.FormatInt(n, 10)
+    out := make([]byte, len(in)+(len(in)-2+int(in[0]/'0'))/3)
+    if in[0] == '-' {
+        in, out[0] = in[1:], '-'
+    }
+
+    for i, j, k := len(in)-1, len(out)-1, 0; ; i, j = i-1, j-1 {
+        out[j] = in[i]
+        if i == 0 {
+            return string(out)
+        }
+        if k++; k == 3 {
+            j, k = j-1, 0
+            out[j] = ','
+        }
+    }
 }
 
 func main() {
@@ -133,6 +152,7 @@ func main() {
     sort.Sort(serverList)
 
     playerCount := 0
+    queueCount := 0
 
     // Iterate over servers and print IP and query port
     for _, server := range serverList {
@@ -143,36 +163,61 @@ func main() {
         if *DisplayPtr || *Display2Ptr {
             r, _ := regexp.Compile("[0-9]{1,2}:[0-9]{1,2}")
             Time := r.Find([]byte(server.Gametype))
-// grep -oE 'etm[0-9]{1,}\.[0-9]{,6}' | sed 's/etm//'
+            TimeMultiplier := 1.0
+            TimeMultiplierNight := 1.0
+
             r, _ = regexp.Compile("etm([0-9]{1,3}.[0-9]{1,6})")
             TimeMultiMatches := r.FindStringSubmatch(server.Gametype)
-            TimeMultiplier := 1
             if len(TimeMultiMatches) > 0 {
                 i, err := strconv.ParseFloat(TimeMultiMatches[1], 64)
                 if err == nil {
-                    TimeMultiplier = int(i)
+                    TimeMultiplier = i
                 }
             }
+
+            r, _ = regexp.Compile("entm([0-9]{1,3}.[0-9]{1,6})")
+            TimeMultiMatches = r.FindStringSubmatch(server.Gametype)
+            if len(TimeMultiMatches) > 0 {
+                i, err := strconv.ParseFloat(TimeMultiMatches[1], 64)
+                if err == nil {
+                    TimeMultiplierNight = i
+                }
+            }
+
+            TimeMultiplierString := fmt.Sprintf("%.1fx/%.1fx", TimeMultiplier, TimeMultiplierNight)
+            TimeMultiplierString = strings.Replace(TimeMultiplierString, ".0x", "x", -1)
+
+            QueueSize := int64(0)
+            r, _ = regexp.Compile("lqs([0-9]+)")
+            QueueSizeMatches := r.FindStringSubmatch(server.Gametype)
+            if len(QueueSizeMatches) > 0 {
+                i, err := strconv.ParseInt(QueueSizeMatches[1], 10, 64)
+                if err == nil {
+                    QueueSize = i
+                }
+            }
+            queueCount += int(QueueSize)
+
             Perspective := "3PP"
             if strings.Contains(server.Gametype, "no3rd") {
                 Perspective = "1PP"
             }
             serverName := stripCtlAndExtFromBytes(server.Name)
-            if server.Appid == 221100 {
-                if len(serverName) > 46 {
-                    serverName = serverName[:46]
+            if server.Appid == 221100 || server.Appid == 1024020 {
+                if len(serverName) > 50 {
+                    serverName = serverName[:50]
                 }
                 if *Display2Ptr {
                     tokens := strings.Split(server.Addr, ":")
-                    fmt.Printf("%-46s %3d/%3d %s %2dx %s %s %s %s\n", serverName, server.Players, server.MaxPlayers, Time, TimeMultiplier, Perspective, server.Version, tokens[0], tokens[1])
+                    fmt.Printf("%-50s %3d/%-3d %s %s %s %s %s %s\n", serverName, server.Players, server.MaxPlayers, Time, TimeMultiplierString, Perspective, server.Version, tokens[0], tokens[1])
                 } else {
-                    fmt.Printf("%-46s %3d/%3d %s %2dx %s %s\n", serverName, server.Players, server.MaxPlayers, Time, TimeMultiplier, Perspective, server.Version)
+                    fmt.Printf("%-50s %3d/%-3d %s %s %s %s\n", serverName, server.Players, server.MaxPlayers, Time, TimeMultiplierString, Perspective, server.Version)
                 }
             } else {
                 if len(serverName) > 52 {
                     serverName = serverName[:52]
                 }
-                fmt.Printf("%-52s %2d/%2d %s %s\n", serverName, server.Players, server.MaxPlayers, Time, server.Version)
+                fmt.Printf("%-56s %2d/%2d %s %s\n", serverName, server.Players, server.MaxPlayers, Time, server.Version)
             }
             playerCount += server.Players
         } else {
@@ -188,6 +233,6 @@ func main() {
     }
 
     if *DisplayPtr || *Display2Ptr {
-        fmt.Printf("\n%d players on %d servers\n", playerCount, len(serverList))
+        fmt.Printf("\n%s players on %s servers and %s in queue\n", Format(int64(playerCount)), Format(int64(len(serverList))), Format(int64(queueCount)))
     }
 }
