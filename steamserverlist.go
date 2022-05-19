@@ -154,6 +154,8 @@ func main() {
 
 	playerCount := 0
 	queueCount := 0
+    playerCount1pp := 0
+    playerCount3pp := 0
 
 	// Iterate over servers and print IP and query port
 	for _, server := range allServers {
@@ -202,7 +204,10 @@ func main() {
 			Perspective := "3PP"
 			if strings.Contains(server.Gametype, "no3rd") {
 				Perspective = "1PP"
-			}
+                playerCount1pp += server.Players
+			} else {
+                playerCount3pp += server.Players
+            }
 			serverName := stripCtlAndExtFromBytes(server.Name)
 			if server.Appid == 221100 || server.Appid == 1024020 {
 				if len(serverName) > 50 {
@@ -234,6 +239,7 @@ func main() {
 	}
 
 	if *DisplayPtr || *Display2Ptr {
-		fmt.Printf("\n%s players on %s servers and %s in queue\n", addCommaSeperator(int64(playerCount)), addCommaSeperator(int64(len(allServers))), addCommaSeperator(int64(queueCount)))
+		fmt.Printf("\n%s players on %s servers and %s in queue. ", addCommaSeperator(int64(playerCount)), addCommaSeperator(int64(len(allServers))), addCommaSeperator(int64(queueCount)))
+        fmt.Printf("%s 3PP and %s 1PP. %0.02f%% are 1PP\n", addCommaSeperator(int64(playerCount3pp)), addCommaSeperator(int64(playerCount1pp)), (float64(playerCount1pp)/float64(playerCount))*100.0)
 	}
 }
